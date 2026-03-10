@@ -278,6 +278,116 @@ Do you want to connect to the server?
     </message>
 </context>
 <context>
+    <name>KeyCaptureButton</name>
+    <message>
+        <source>Press a key...</source>
+        <translation>キーを押してください...</translation>
+    </message>
+</context>
+<context>
+    <name>KeyMapCalibrationDialog</name>
+    <message>
+        <source>Keyboard Calibration</source>
+        <translation>キーボード補正</translation>
+    </message>
+    <message>
+        <source>Physical key</source>
+        <translation>物理キー</translation>
+    </message>
+    <message>
+        <source>Click to capture</source>
+        <translation>クリックして取得</translation>
+    </message>
+    <message>
+        <source>Key code</source>
+        <translation>キーコード</translation>
+    </message>
+    <message>
+        <source>Deskflow key</source>
+        <translation>Deskflowキー</translation>
+    </message>
+    <message>
+        <source>Use the same key for each capture. Mouse clicks are ignored while recording.
+Saved to ~/Library/Deskflow/keyboard-calibration.json
+
+Overrides can also be added manually in keyboard-calibration.json.
+Example: &quot;overrides&quot;: [ { &quot;match&quot;: { &quot;id&quot;: &quot;F13&quot; }, &quot;send&quot;: { &quot;id&quot;: &quot;Control_L&quot; } }, { ... } ]</source>
+        <translation>それぞれ同じキーを入力してください。取得中はマウスクリックは無視されます。
+保存先: ~/Library/Deskflow/keyboard-calibration.json
+
+keyboard-calibration.json には overrides を手動で追加することもできます。
+例: &quot;overrides&quot;: [ { &quot;match&quot;: { &quot;id&quot;: &quot;F13&quot; }, &quot;send&quot;: { &quot;id&quot;: &quot;Control_L&quot; } }, { ... } ]</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>保存</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>閉じる</translation>
+    </message>
+    <message>
+        <source>Unable to Save</source>
+        <translation>保存できません</translation>
+    </message>
+    <message>
+        <source>Could not create the selected folder.</source>
+        <translation>保存先フォルダを作成できませんでした。</translation>
+    </message>
+    <message>
+        <source>The JSON file is corrupted or you do not have permission to read it.</source>
+        <translation>JSONファイルが壊れているか権限がありません。</translation>
+    </message>
+    <message>
+        <source>The JSON file is invalid and could not be opened.</source>
+        <translation>JSONファイルが不正で開けませんでした。</translation>
+    </message>
+    <message>
+        <source>You do not have permission to write to the JSON file.</source>
+        <translation>JSONファイルに書き込み権限がありません。</translation>
+    </message>
+    <message>
+        <source>Writing to the JSON file failed.</source>
+        <translation>JSONファイルへの書き込みに失敗しました。</translation>
+    </message>
+    <message>
+        <source>Saved successfully</source>
+        <translation>正常に保存しました</translation>
+    </message>
+    <message>
+        <source>Saved to %1</source>
+        <translation>%1 に保存しました</translation>
+    </message>
+    <message>
+        <source>Not captured</source>
+        <translation>未取得</translation>
+    </message>
+    <message>
+        <source>Capture a physical key and a Deskflow key.</source>
+        <translation>物理キーとDeskflowキーを取得してください。</translation>
+    </message>
+    <message>
+        <source>Capture the physical key first.</source>
+        <translation>先に物理キーを取得してください。</translation>
+    </message>
+    <message>
+        <source>Capture the Deskflow key next.</source>
+        <translation>次にDeskflowキーを取得してください。</translation>
+    </message>
+    <message>
+        <source>Both captures match. Saving will still update the JSON.</source>
+        <translation>両方の取得結果は一致しています。保存すると JSON は更新されます。</translation>
+    </message>
+    <message>
+        <source>The text matches, but the key code is different.</source>
+        <translation>文字は一致していますが、キーコードが異なります。</translation>
+    </message>
+    <message>
+        <source>Difference detected. Saving will append or replace this mapping in the JSON.</source>
+        <translation>差分を検出しました。保存すると、JSON に追加または上書きされます。</translation>
+    </message>
+</context>
+<context>
     <name>LogDock</name>
     <message>
         <source>Log</source>
@@ -483,6 +593,10 @@ A bound IP is now invalid, you may need to restart the server.</source>
     <message>
         <source>Clear settings</source>
         <translation>設定を消去</translation>
+    </message>
+    <message>
+        <source>Keyboard Calibration</source>
+        <translation>キーボード補正</translation>
     </message>
     <message>
         <source>Report a Bug</source>

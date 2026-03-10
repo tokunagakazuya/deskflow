@@ -9,6 +9,7 @@
 
 #include "OSXAutoTypes.h"
 #include "deskflow/KeyState.h"
+#include "platform/OSXKeyCalibration.h"
 
 #include <Carbon/Carbon.h>
 
@@ -90,6 +91,11 @@ protected:
   // KeyState overrides
   void getKeyMap(deskflow::KeyMap &keyMap) override;
   void fakeKey(const Keystroke &keystroke) override;
+  KeyID remapFakeKeyID(KeyID id, KeyModifierMask mask) override;
+  KeyButton remapFakeKey(
+      KeyID id, KeyModifierMask mask, KeyButton localID, deskflow::KeyMap::ModifierToKeys &activeModifiers,
+      KeyModifierMask &currentState, deskflow::KeyMap::Keystrokes &keys
+  ) override;
 
 private:
   class KeyResource;
@@ -163,4 +169,5 @@ private:
   bool m_superPressed;
   bool m_capsPressed;
   CGEventFlags m_deviceDependentFlags;
+  OSXKeyCalibration m_keyCalibration;
 };

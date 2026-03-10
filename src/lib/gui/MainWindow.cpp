@@ -16,6 +16,7 @@
 #include "dialogs/AboutDialog.h"
 #include "dialogs/ClientConfigDialog.h"
 #include "dialogs/FingerprintDialog.h"
+#include "dialogs/KeyMapCalibrationDialog.h"
 #include "dialogs/ServerConfigDialog.h"
 #include "dialogs/SettingsDialog.h"
 
@@ -77,6 +78,7 @@ MainWindow::MainWindow()
       m_actionAbout{new QAction(this)},
       m_actionClearSettings{new QAction(this)},
       m_actionReportBug{new QAction(this)},
+      m_actionKeyboardCalibration{new QAction(this)},
       m_actionMinimize{new QAction(this)},
       m_actionQuit{new QAction(this)},
       m_actionTrayQuit{new QAction(this)},
@@ -129,6 +131,9 @@ MainWindow::MainWindow()
 
   m_actionReportBug->setIcon(QIcon::fromTheme(QStringLiteral("tools-report-bug")));
   m_actionReportBug->setMenuRole(QAction::NoRole);
+
+  m_actionKeyboardCalibration->setIcon(QIcon::fromTheme(QStringLiteral("input-keyboard")));
+  m_actionKeyboardCalibration->setMenuRole(QAction::NoRole);
 
   // Setup the Instance Checking
   // In case of a previous crash remove first
@@ -279,6 +284,7 @@ void MainWindow::connectSlots()
 
   connect(m_actionAbout, &QAction::triggered, this, &MainWindow::openAboutDialog);
   connect(m_actionClearSettings, &QAction::triggered, this, &MainWindow::clearSettings);
+  connect(m_actionKeyboardCalibration, &QAction::triggered, this, &MainWindow::openKeyboardCalibrationDialog);
   connect(m_actionReportBug, &QAction::triggered, this, &MainWindow::openHelpUrl);
   connect(m_actionMinimize, &QAction::triggered, this, &MainWindow::hide);
 
@@ -692,6 +698,7 @@ void MainWindow::createMenuBar()
   m_menuView->addAction(m_logDock->toggleViewAction());
 
   m_menuHelp->addAction(m_actionAbout);
+  m_menuHelp->addAction(m_actionKeyboardCalibration);
   m_menuHelp->addAction(m_actionReportBug);
   m_menuHelp->addSeparator();
   m_menuHelp->addAction(m_actionClearSettings);
@@ -1063,6 +1070,7 @@ void MainWindow::updateText()
   m_menuHelp->setTitle(tr("&Help"));
 
   m_actionClearSettings->setText(tr("Clear settings"));
+  m_actionKeyboardCalibration->setText(tr("Keyboard Calibration"));
   m_actionReportBug->setText(tr("Report a Bug"));
   m_actionMinimize->setText(tr("&Minimize to tray"));
   m_actionQuit->setText(tr("&Quit"));
@@ -1092,6 +1100,12 @@ void MainWindow::updateText()
   // General controls
   m_btnFingerprint->setToolTip(tr("View local fingerprint"));
   m_btnUpdate->setText(tr("Update available"));
+}
+
+void MainWindow::openKeyboardCalibrationDialog()
+{
+  KeyMapCalibrationDialog dialog(this);
+  dialog.exec();
 }
 
 void MainWindow::showConfigureServer(const QString &message)

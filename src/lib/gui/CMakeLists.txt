@@ -74,6 +74,8 @@ add_library(${target} STATIC
   dialogs/HotkeyDialog.cpp
   dialogs/HotkeyDialog.h
   dialogs/HotkeyDialog.ui
+  dialogs/KeyMapCalibrationDialog.cpp
+  dialogs/KeyMapCalibrationDialog.h
   dialogs/ScreenSettingsDialog.cpp
   dialogs/ScreenSettingsDialog.h
   dialogs/ScreenSettingsDialog.ui

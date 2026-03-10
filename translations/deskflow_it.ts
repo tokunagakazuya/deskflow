@@ -278,6 +278,112 @@ Vuoi connetterti al server?
     </message>
 </context>
 <context>
+    <name>KeyCaptureButton</name>
+    <message>
+        <source>Press a key...</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>KeyMapCalibrationDialog</name>
+    <message>
+        <source>Keyboard Calibration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Physical key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to capture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Key code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deskflow key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use the same key for each capture. Mouse clicks are ignored while recording.
+Saved to ~/Library/Deskflow/keyboard-calibration.json
+
+Overrides can also be added manually in keyboard-calibration.json.
+Example: &quot;overrides&quot;: [ { &quot;match&quot;: { &quot;id&quot;: &quot;F13&quot; }, &quot;send&quot;: { &quot;id&quot;: &quot;Control_L&quot; } }, { ... } ]</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unable to Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not create the selected folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The JSON file is corrupted or you do not have permission to read it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The JSON file is invalid and could not be opened.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You do not have permission to write to the JSON file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Writing to the JSON file failed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved successfully</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not captured</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Capture a physical key and a Deskflow key.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Capture the physical key first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Capture the Deskflow key next.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Both captures match. Saving will still update the JSON.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text matches, but the key code is different.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Difference detected. Saving will append or replace this mapping in the JSON.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>LogDock</name>
     <message>
         <source>Log</source>
@@ -329,6 +435,10 @@ Vuoi connetterti al server?
     <message>
         <source>Clear settings</source>
         <translation>Cancella impostazioni</translation>
+    </message>
+    <message>
+        <source>Keyboard Calibration</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Report a Bug</source>

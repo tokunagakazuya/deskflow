@@ -74,6 +74,8 @@ elseif(APPLE)
     OSXCocoaApp.m
     OSXEventQueueBuffer.cpp
     OSXEventQueueBuffer.h
+    OSXKeyCalibration.h
+    OSXKeyCalibration.mm
     OSXKeyState.cpp
     OSXKeyState.h
     OSXMediaKeySupport.h

@@ -95,6 +95,18 @@ protected:
   */
   virtual void fakeKey(const Keystroke &keystroke) = 0;
 
+  //! Adjust synthesized key sequence before posting
+  /*!
+  Allows a platform to replace the mapped key button for special cases
+  while keeping the existing key state flow intact.
+  */
+  virtual KeyButton remapFakeKey(
+      KeyID id, KeyModifierMask mask, KeyButton localID, deskflow::KeyMap::ModifierToKeys &activeModifiers,
+      KeyModifierMask &currentState, deskflow::KeyMap::Keystrokes &keys
+  );
+
+  virtual KeyID remapFakeKeyID(KeyID id, KeyModifierMask mask);
+
   //! Get the active modifiers
   /*!
   Returns the modifiers that are currently active according to our
@@ -185,6 +197,9 @@ private:
   // update key state to match changes to modifiers
   void updateModifierKeyState(KeyButton button, const ModifierToKeys &oldModifiers, const ModifierToKeys &newModifiers);
 
+  KeyModifierMask getServerOverrideModifierMask(KeyButton ignoreServerID) const;
+  static KeyModifierMask getOverrideModifierMaskForKey(KeyID id);
+
   // active modifiers collection callback
   static void addActiveModifierCB(KeyID id, int32_t group, deskflow::KeyMap::KeyItem &keyItem, void *vcontext);
 
@@ -218,6 +233,9 @@ private:
   // server keyboard state.  an entry is 0 if not the key isn't pressed
   // otherwise it's the local KeyButton synthesized for the server key.
   KeyButton m_serverKeys[s_numButtons];
+
+  // active override modifiers for each server key.
+  KeyModifierMask m_serverOverrideModifiers[s_numButtons];
 
   IEventQueue *m_events;
 

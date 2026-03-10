@@ -14,6 +14,8 @@
 #include <Carbon/Carbon.h>
 #include <IOKit/hidsystem/IOHIDLib.h>
 
+#include <algorithm>
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
@@ -38,6 +40,76 @@ static const uint32_t s_missionControlVK = 160;
 static const uint32_t s_launchpadVK = 131;
 
 static const uint32_t s_osxNumLock = 1 << 16;
+
+namespace {
+
+bool isShiftActiveForButton(
+    const deskflow::KeyMap::Keystrokes &keys, KeyButton shiftButton, KeyButton button, bool initialShift
+)
+{
+  bool shiftActive = initialShift;
+  for (const auto &key : keys) {
+    if (key.m_type != deskflow::KeyMap::Keystroke::KeyType::Button) {
+      continue;
+    }
+
+    if (key.m_data.m_button.m_button == shiftButton) {
+      shiftActive = key.m_data.m_button.m_press;
+      continue;
+    }
+
+    if (key.m_data.m_button.m_button == button) {
+      return shiftActive;
+    }
+  }
+
+  return shiftActive;
+}
+
+void rewriteShiftKeystrokesForButton(
+    deskflow::KeyMap::Keystrokes &keys, KeyButton shiftButton, KeyButton button, bool initialShift, bool targetShift
+)
+{
+  keys.erase(
+      std::remove_if(
+          keys.begin(), keys.end(),
+          [shiftButton](const deskflow::KeyMap::Keystroke &key) {
+            return key.m_type == deskflow::KeyMap::Keystroke::KeyType::Button &&
+                   key.m_data.m_button.m_button == shiftButton;
+          }
+      ),
+      keys.end()
+  );
+
+  size_t firstButtonIndex = keys.size();
+  size_t lastButtonIndex = keys.size();
+  for (size_t i = 0; i < keys.size(); ++i) {
+    if (keys[i].m_type == deskflow::KeyMap::Keystroke::KeyType::Button && keys[i].m_data.m_button.m_button == button) {
+      if (firstButtonIndex == keys.size()) {
+        firstButtonIndex = i;
+      }
+      lastButtonIndex = i;
+    }
+  }
+
+  if (firstButtonIndex == keys.size()) {
+    return;
+  }
+
+  if (initialShift != targetShift) {
+    keys.insert(
+        keys.begin() + static_cast<deskflow::KeyMap::Keystrokes::difference_type>(firstButtonIndex),
+        deskflow::KeyMap::Keystroke(shiftButton, targetShift, false, 0)
+    );
+    ++lastButtonIndex;
+    keys.insert(
+        keys.begin() + static_cast<deskflow::KeyMap::Keystrokes::difference_type>(lastButtonIndex + 1),
+        deskflow::KeyMap::Keystroke(shiftButton, initialShift, false, 0)
+    );
+  }
+}
+
+} // namespace
 
 struct KeyEntry
 {
@@ -173,10 +245,8 @@ io_connect_t getEventDriver()
 
 bool isModifier(uint8_t virtualKey)
 {
-  static std::set<uint8_t> modifiers{
-      s_shiftVK, s_superVK, s_altVK, s_controlVK, s_rightShiftVK, s_rightSuperVK, s_rightAltVK, s_rightControlVK,
-      s_capsLockVK
-  };
+  static std::set<uint8_t> modifiers{s_shiftVK,      s_superVK,    s_altVK,          s_controlVK, s_rightShiftVK,
+                                     s_rightSuperVK, s_rightAltVK, s_rightControlVK, s_capsLockVK};
 
   return (modifiers.find(virtualKey) != modifiers.end());
 }
@@ -679,6 +749,54 @@ void OSXKeyState::fakeKey(const Keystroke &keystroke)
   }
 }
 
+KeyID OSXKeyState::remapFakeKeyID(KeyID id, KeyModifierMask mask)
+{
+  static_cast<void>(mask);
+  return m_keyCalibration.remapKeyID(id);
+}
+
+KeyButton OSXKeyState::remapFakeKey(
+    KeyID id, KeyModifierMask mask, KeyButton localID, deskflow::KeyMap::ModifierToKeys &activeModifiers,
+    KeyModifierMask &currentState, deskflow::KeyMap::Keystrokes &keys
+)
+{
+  static_cast<void>(activeModifiers);
+  static_cast<void>(currentState);
+
+  if (m_keyCalibration.empty()) {
+    return localID;
+  }
+
+  const auto shiftButton = mapVirtualKeyToKeyButton(s_shiftVK);
+  const auto initialShift = (mask & KeyModifierShift) != 0;
+  const auto sourceShift = isShiftActiveForButton(keys, shiftButton, localID, initialShift);
+  const auto *entry = m_keyCalibration.find(localID, sourceShift ? KeyModifierShift : 0, id);
+  if (entry == nullptr) {
+    return localID;
+  }
+
+  bool replaced = false;
+  for (auto &key : keys) {
+    if (key.m_type == Keystroke::KeyType::Button && key.m_data.m_button.m_button == localID) {
+      key.m_data.m_button.m_button = entry->m_targetButton;
+      replaced = true;
+    }
+  }
+  const auto targetShift = (entry->m_targetModifiers & KeyModifierShift) != 0;
+
+  if (!replaced) {
+    return localID;
+  }
+
+  rewriteShiftKeystrokesForButton(keys, shiftButton, entry->m_targetButton, initialShift, targetShift);
+
+  LOG_DEBUG1(
+      "remapped calibrated key id=0x%04x mask=0x%04x local=0x%04x target=0x%04x shift=%d->%d", id, mask, localID,
+      entry->m_targetButton, sourceShift ? 1 : 0, targetShift ? 1 : 0
+  );
+  return entry->m_targetButton;
+}
+
 void OSXKeyState::getKeyMapForSpecialKeys(deskflow::KeyMap &keyMap, int32_t group) const
 {
   // special keys are insensitive to modifers and none are dead keys
@@ -695,10 +813,8 @@ void OSXKeyState::getKeyMapForSpecialKeys(deskflow::KeyMap &keyMap, int32_t grou
     deskflow::KeyMap::initModifierKey(item);
     keyMap.addKeyEntry(item);
 
-    if (
-        item.m_lock || item.m_id == kKeyMuhenkan || item.m_id == kKeyHenkan || item.m_id == kKeyEisuToggle ||
-        item.m_id == kKeyKana
-    ) {
+    if (item.m_lock || item.m_id == kKeyMuhenkan || item.m_id == kKeyHenkan || item.m_id == kKeyEisuToggle ||
+        item.m_id == kKeyKana) {
       // all locking keys and JIS mode keys are half duplex on OS X
       keyMap.addHalfDuplexButton(item.m_button);
     }
@@ -858,7 +974,9 @@ bool OSXKeyState::mapDeskflowHotKeyToMac(
   return true;
 }
 
-void OSXKeyState::handleModifierKeys(void *target, uint32_t virtualKey, KeyModifierMask oldMask, KeyModifierMask newMask)
+void OSXKeyState::handleModifierKeys(
+    void *target, uint32_t virtualKey, KeyModifierMask oldMask, KeyModifierMask newMask
+)
 {
   // compute changed modifiers
   KeyModifierMask changed = (oldMask ^ newMask);
@@ -878,8 +996,7 @@ void OSXKeyState::handleModifierKeys(void *target, uint32_t virtualKey, KeyModif
   }
   if ((changed & KeyModifierAlt) != 0) {
     handleModifierKey(
-        target, virtualKey, virtualKey == s_rightAltVK ? kKeyAlt_R : kKeyAlt_L, (newMask & KeyModifierAlt) != 0,
-        newMask
+        target, virtualKey, virtualKey == s_rightAltVK ? kKeyAlt_R : kKeyAlt_L, (newMask & KeyModifierAlt) != 0, newMask
     );
   }
   if ((changed & KeyModifierSuper) != 0) {

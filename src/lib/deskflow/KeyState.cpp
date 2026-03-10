@@ -678,6 +678,7 @@ void KeyState::init()
   memset(&m_syntheticKeys, 0, sizeof(m_syntheticKeys));
   memset(&m_keyClientData, 0, sizeof(m_keyClientData));
   memset(&m_serverKeys, 0, sizeof(m_serverKeys));
+  memset(&m_serverOverrideModifiers, 0, sizeof(m_serverOverrideModifiers));
 }
 
 void KeyState::onKey(KeyButton button, bool down, KeyModifierMask newState)
@@ -750,6 +751,7 @@ void KeyState::updateKeyState()
   memset(&m_syntheticKeys, 0, sizeof(m_syntheticKeys));
   memset(&m_keyClientData, 0, sizeof(m_keyClientData));
   memset(&m_serverKeys, 0, sizeof(m_serverKeys));
+  memset(&m_serverOverrideModifiers, 0, sizeof(m_serverOverrideModifiers));
   m_activeModifiers.clear();
 
   // get the current keyboard state
@@ -802,6 +804,10 @@ void KeyState::fakeKeyDown(KeyID id, KeyModifierMask mask, KeyButton serverID, c
     return;
   }
 
+  auto originalID = id;
+  id = remapFakeKeyID(id, mask);
+  mask |= getServerOverrideModifierMask(IKeyState::s_numButtons);
+
   // ignore certain keys
   if (isIgnoredKey(id, mask)) {
     LOG_DEBUG1("ignored key %04x %04x", id, mask);
@@ -826,6 +832,7 @@ void KeyState::fakeKeyDown(KeyID id, KeyModifierMask mask, KeyButton serverID, c
   }
 
   auto localID = (KeyButton)(keyItem->m_button & kButtonMask);
+  localID = remapFakeKey(id, mask, localID, m_activeModifiers, m_mask, keys);
   updateModifierKeyState(localID, oldActiveModifiers, m_activeModifiers);
   if (localID != 0) {
     // note keys down
@@ -833,6 +840,7 @@ void KeyState::fakeKeyDown(KeyID id, KeyModifierMask mask, KeyButton serverID, c
     ++m_syntheticKeys[localID];
     m_keyClientData[localID] = keyItem->m_client;
     m_serverKeys[serverID] = localID;
+    m_serverOverrideModifiers[serverID] = (id != originalID) ? getOverrideModifierMaskForKey(id) : 0;
   }
 
   // generate key events
@@ -850,6 +858,10 @@ bool KeyState::fakeKeyRepeat(KeyID id, KeyModifierMask mask, int32_t count, KeyB
     return false;
   }
 
+  auto originalID = id;
+  id = remapFakeKeyID(id, mask);
+  mask |= getServerOverrideModifierMask(serverID);
+
   // get keys for key repeat
   Keystrokes keys;
   ModifierToKeys oldActiveModifiers = m_activeModifiers;
@@ -859,6 +871,7 @@ bool KeyState::fakeKeyRepeat(KeyID id, KeyModifierMask mask, int32_t count, KeyB
     return false;
   }
   auto localID = (KeyButton)(keyItem->m_button & kButtonMask);
+  localID = remapFakeKey(id, mask, localID, m_activeModifiers, m_mask, keys);
   if (localID == 0) {
     return false;
   }
@@ -891,6 +904,8 @@ bool KeyState::fakeKeyRepeat(KeyID id, KeyModifierMask mask, int32_t count, KeyB
     m_serverKeys[serverID] = localID;
   }
 
+  m_serverOverrideModifiers[serverID] = (id != originalID) ? getOverrideModifierMaskForKey(id) : 0;
+
   // generate key events
   fakeKeys(keys, count);
   return true;
@@ -898,8 +913,10 @@ bool KeyState::fakeKeyRepeat(KeyID id, KeyModifierMask mask, int32_t count, KeyB
 
 bool KeyState::fakeKeyUp(KeyButton serverID)
 {
+  serverID &= kButtonMask;
+
   // if we haven't seen this button go down then ignore it
-  KeyButton localID = m_serverKeys[serverID & kButtonMask];
+  KeyButton localID = m_serverKeys[serverID];
   if (localID == 0) {
     return false;
   }
@@ -912,6 +929,7 @@ bool KeyState::fakeKeyUp(KeyButton serverID)
   --m_keys[localID];
   --m_syntheticKeys[localID];
   m_serverKeys[serverID] = 0;
+  m_serverOverrideModifiers[serverID] = 0;
 
   // check if this is a modifier
   auto i = m_activeModifiers.begin();
@@ -951,6 +969,7 @@ void KeyState::fakeAllKeysUp()
   }
   fakeKeys(keys, 1);
   memset(&m_serverKeys, 0, sizeof(m_serverKeys));
+  memset(&m_serverOverrideModifiers, 0, sizeof(m_serverOverrideModifiers));
   m_activeModifiers.clear();
   m_mask = pollActiveModifiers();
 }
@@ -973,6 +992,71 @@ KeyModifierMask KeyState::getActiveModifiers() const
 KeyModifierMask &KeyState::getActiveModifiersRValue()
 {
   return m_mask;
+}
+
+KeyButton KeyState::remapFakeKey(
+    KeyID, KeyModifierMask, KeyButton localID, deskflow::KeyMap::ModifierToKeys &, KeyModifierMask &,
+    deskflow::KeyMap::Keystrokes &
+)
+{
+  return localID;
+}
+
+KeyModifierMask KeyState::getServerOverrideModifierMask(KeyButton ignoreServerID) const
+{
+  KeyModifierMask mask = 0;
+  for (KeyButton i = 0; i < IKeyState::s_numButtons; ++i) {
+    if (i != ignoreServerID) {
+      mask |= m_serverOverrideModifiers[i];
+    }
+  }
+
+  return mask;
+}
+
+KeyModifierMask KeyState::getOverrideModifierMaskForKey(KeyID id)
+{
+  switch (id) {
+  case kKeyShift_L:
+  case kKeyShift_R:
+    return KeyModifierShift;
+
+  case kKeyControl_L:
+  case kKeyControl_R:
+    return KeyModifierControl;
+
+  case kKeyAlt_L:
+  case kKeyAlt_R:
+    return KeyModifierAlt;
+
+  case kKeyMeta_L:
+  case kKeyMeta_R:
+    return KeyModifierMeta;
+
+  case kKeySuper_L:
+  case kKeySuper_R:
+    return KeyModifierSuper;
+
+  case kKeyAltGr:
+    return KeyModifierAltGr;
+
+  case kKeyCapsLock:
+    return KeyModifierCapsLock;
+
+  case kKeyNumLock:
+    return KeyModifierNumLock;
+
+  case kKeyScrollLock:
+    return KeyModifierScrollLock;
+
+  default:
+    return 0;
+  }
+}
+
+KeyID KeyState::remapFakeKeyID(KeyID id, KeyModifierMask)
+{
+  return id;
 }
 
 int32_t KeyState::getEffectiveGroup(int32_t group, int32_t offset) const
